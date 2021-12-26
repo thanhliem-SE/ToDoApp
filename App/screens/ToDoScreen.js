@@ -7,15 +7,54 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
+  Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import colors from "../config/colors";
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
-function MainScreen(props) {
-  const [todos, setTodos] = React.useState([
-    { id: 1, task: "First todo", completed: true },
-    { id: 2, task: "Second todo", completed: true },
-  ]);
+function ToDoScreen(props) {
+
+  const [textInput, setTextInput] = React.useState('')
+
+  const [todos, setTodos] = React.useState([]);
+
+  // React.useEffect(() => {
+  //   getTodosFromUserDevice();
+  // }, []);
+
+  // React.useEffect(() => {
+  //   saveTodoTouserDevice();
+  // }, [todos]);
+
+  const addTodo = () => {
+    if (textInput == '') {
+      Alert.alert('Error', 'Please input todo');
+    } else {
+      const newTodo = {
+        id: Math.random(),
+        task: textInput,
+        completed: false,
+      }
+      setTodos([...todos, newTodo]);
+      setTextInput('');
+    }
+  };
+
+  const markTodoComplete = (todoId) => {
+    const newTodos = todos.map(item => {
+      if (item.id === todoId) {
+        return { ...item, completed: true };
+      }
+      return item;
+    });
+    setTodos(newTodos);;
+  }
+
+  const deleteTodo = (todoId) => {
+    const newTodos = todos.filter(item => item.id != todoId);
+    setTodos(newTodos);
+  }
 
   const ListItem = ({ todo }) => {
     return (
@@ -33,24 +72,52 @@ function MainScreen(props) {
           </Text>
         </View>
         {!todo?.completed && (
-          <TouchableOpacity style={styles.actionIcon}>
+          <TouchableOpacity style={styles.actionIcon} onPress={() => markTodoComplete(todo?.id)}>
             <Icon name="done" size={20} color={colors.white}></Icon>
           </TouchableOpacity>
         )}
         <TouchableOpacity
           style={(styles.actionIcon, { backgroundColor: "red" })}
         >
-          <Icon name="delete" size={20} color={colors.white}></Icon>
+          <Icon name="delete" size={20} color={colors.white} onPress={() => deleteTodo(todo?.id)}></Icon>
         </TouchableOpacity>
       </View>
     );
+  };
+
+  const clearTodo = () => {
+    Alert.alert("Confirm", "Clear todos?", [
+      { text: "Yes", onPress: () => setTodos([]) },
+      { text: "No" }
+    ])
+  }
+
+  const saveTodoTouserDevice = async (todos) => {
+    try {
+      const stringifyTodos = JSON.stringify(todos)
+      await AsyncStorage.setItem('todos', stringifyTodos)
+    } catch (e) {
+      // saving error
+      console.log(e);
+    };
+  };
+
+  const getTodosFromUserDevice = async () => {
+    try {
+      const todos = await AsyncStorage.getItem('todos');
+      if (todos != null) {
+        setTodos(JSON.parse(todos));
+      }
+    } catch (error) {
+      console.log(error);
+    };
   };
 
   return (
     <SafeAreaView style={styles.background}>
       <View style={styles.header}>
         <Text style={styles.title}>TODO APP</Text>
-        <Icon name="delete" size={25} color="red" />
+        <Icon name="delete" size={25} color="red" onPress={() => clearTodo()} />
       </View>
       <FlatList
         showsVerticalScrollIndicator={false}
@@ -60,9 +127,13 @@ function MainScreen(props) {
       />
       <View style={styles.footer}>
         <View style={styles.inputContainer}>
-          <TextInput placeholder="Add Todo" />
+          <TextInput
+            placeholder="Add Todo on"
+            value={textInput}
+            onChangeText={text => setTextInput(text)}
+          />
         </View>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={addTodo}>
           <View style={styles.iconContainer}>
             <Icon name="add" color={colors.white} size={30} />
           </View>
@@ -85,7 +156,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: "bold",
-    fontsize: 20,
+    fontSize: 20,
     color: colors.primary,
   },
   footer: {
@@ -135,4 +206,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MainScreen;
+export default ToDoScreen;
