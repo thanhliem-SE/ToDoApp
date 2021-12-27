@@ -8,7 +8,7 @@ A simple todo App for learning React-Native code app.
 * NodeJS
 * NPM/NPX
 
-## Run
+## Step to septup and run
 ```
 git clone https://github.com/thanhliem-SE/ToDoApp.git
 ```
